@@ -1,0 +1,15 @@
+{
+  "output_directory": null,
+  "categories": [60],
+  "delay_range_s": {
+    "min": 0,
+    "max": 1
+  },
+  "max_retries": 3,
+  "headers": null,
+  "logs_dir": "logging",
+  "restart":{
+    "restart_count": 3,
+    "interval_m": 0.0
+  }
+}

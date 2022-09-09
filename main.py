@@ -12,7 +12,6 @@ import os
 from logging import FileHandler, Formatter
 
 
-
 class Product():
 
     def __init__(self, directory):
@@ -54,7 +53,6 @@ class Product():
                 writer.writerow(data)
 
 
-
 class Parser():
 
     def __init__(self, domain):
@@ -65,6 +63,7 @@ class Parser():
         self.get_config()
         self.get_logs()
 
+        # создается объект класса Product для записи данных
         self.products_data = Product(self.out_dir)
 
         self.main_loop()
@@ -81,7 +80,7 @@ class Parser():
 
     def get_config(self):
         """
-        # считываение и настройка параметров с файла config.json
+        считываение и настройка параметров с файла config.json
         """
         with open('config.json') as f:
             config = json.load(f)
@@ -114,7 +113,9 @@ class Parser():
         self.logs_dir = config['logs_dir']
 
     def get_logs(self):
-        # настройка логов
+        """
+        настройка логов
+        """
         self.logger = logging.getLogger('logger')
         self.logger.setLevel(logging.INFO)
         if not os.path.exists(self.logs_dir):
@@ -157,7 +158,6 @@ class Parser():
 
         # Параметр: ссылка
         sku_link = url
-
 
         # Параметр: название товара
         try:
@@ -288,6 +288,10 @@ class Parser():
             self.products_data.check_and_write(result)
 
     def main_loop(self):
+        """
+        Главный цикл программы
+        Существует пока не выполнится парсер или достигнуто максимальное количество рестартов
+        """
         restart_count = 0
         while restart_count < self.max_restart_count:
             try:
@@ -301,13 +305,13 @@ class Parser():
                     page_max = 1
                     while page <= page_max:
 
-
                         page_url = URL + f'?PAGEN_1={page}'
-                        # вывод в консоль
+                        # вывод в консоль инфомации о обрабатываемой странице
                         print(f'Обработка страницы: "{page}", категории: "{product_category}"')
                         page_data = self.try_request(page_url, self.headers,
                                                      self.max_retries, self.delay_min, self.delay_max)
 
+                        # получаем максимальный номер страницы
                         if page_data:
                             if page_max == 1:
                                 try:
@@ -318,28 +322,31 @@ class Parser():
                                 except:
                                     page_max = 1
 
-
+                            # получаем данные о товарах со страницы
                             items = page_data.find_all("div", class_="catalog-item")
-
-                            # в продуктах получаем ссылку на продукт, делаем запрос, парсим данныы
                             for item in items:
 
+                                # получаем ссылку на продукт для запроса
                                 product_url = domain + item.find("a", class_="name").get("href")
+
+                                # вывод в консоль инфомации о обрабатываемом товаре
                                 print(f'Обработка продукта категории: "{product_category}" по адресу: "{product_url}"')
+
+                                # запрос к конкретному продукту
                                 product_data = self.try_request(product_url, self.headers, self.max_retries,
                                                                 self.delay_min, self.delay_max)
 
+                                # если информация о продукте не пустая, парсим параметры продукта
                                 if product_data:
                                     self.get_product(product_data, product_url, product_category)
                                 else:
                                     self.logger.info(f'Ошибка загрузки товара : "{product_category}"')
-
                             page += 1
                         else:
                             self.logger.info(f'Загрузка страницы: "{page}", категории: "{product_category}" не удалась')
                             break
-                # Выход из цикла при успешной записи
 
+                # Выход из цикла при успешной записи
                 return self.logger.info(f'Попытка парсера № {restart_count} удалась!')
             except KeyboardInterrupt:
                 return quit()
@@ -355,6 +362,7 @@ if __name__ == "__main__":
     # указывается домен
     domain = "https://zootovary.ru"
 
+    # создаем объект класса Parser
     Parser_zoo = Parser(domain)
 
 
